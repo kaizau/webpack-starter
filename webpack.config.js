@@ -4,7 +4,7 @@ var path = require('path');
 module.exports = {
 
   entry: {
-    'package': './source/assets/package.js'
+    'package': './assets/package.js'
   },
 
   output: {
@@ -20,7 +20,12 @@ module.exports = {
   },
 
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin('common.webpack.js')
+    new webpack.optimize.CommonsChunkPlugin('common.webpack.js'),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery'
+    })
   ]
 
 };

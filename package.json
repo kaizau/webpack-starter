@@ -27,6 +27,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "scripts": {
-    "start": "jade watch source/pages/**/* --obj '{\"basedir\":\"source\"}' --hierarchy --out public"
+    "start": "gulp"
   }
 }

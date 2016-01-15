@@ -11,6 +11,7 @@ var rename = require('gulp-rename');
 var clean = require('gulp-clean');
 
 gulp.task('default', ['clean', 'webpack-dev-server', 'compile-jade', 'watch']);
+gulp.task('build', ['clean', 'compile-webpack', 'compile-jade']);
 
 gulp.task('webpack-dev-server', function() {
   Object.keys(webpackConfig.entry).forEach(function(key) {
@@ -60,7 +61,7 @@ gulp.task('clean', function() {
     .pipe(clean());
 });
 
-gulp.task('webpack', function(callback) {
+gulp.task('compile-webpack', function(callback) {
   webpack(webpackConfig)
     .run(function (err, stats) {
       if (err) throw new gulpUtil.PluginError('webpack', err);

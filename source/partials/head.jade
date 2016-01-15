@@ -1,0 +1,20 @@
+head
+  meta(charset="utf-8")
+  meta(content="IE=edge" http-equiv="X-UA-Compatible")
+
+  block headfonts
+
+  block headmeta
+    title Title
+    meta(name="description" content="Description")
+  meta(name="viewport" content="width=device-width, initial-scale=1")
+
+  <!--[if lt IE 9]>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <![endif]-->
+  script.
+    with(document.documentElement){className=className.replace(/\bno-js\b/,'js')}
+
+  script(src='/assets/javascripts/common.webpack.js')
+  block headscripts
+    script(src='/assets/javascripts/package.webpack.js')
