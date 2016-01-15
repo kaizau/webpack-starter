@@ -15,23 +15,19 @@ var clean = require('gulp-clean');
 
 //
 // Task Table
-// 
+//
 // Using runSequence until Gulp 4.0 introduces synchronous tasks.
 //
 
-gulp.task('default', ['develop']);
-
-gulp.task('develop', function(done) {
-  runSequence('clean', 'compile:jade', 'serve:dev', done);
+gulp.task('default', function(done) {
+  runSequence('clean', ['develop:jade', 'develop:webpack'], done);
 });
 
 gulp.task('compile', function(done) {
   runSequence('clean', 'compile:webpack', 'compile:jade', done);
 });
 
-gulp.task('serve', function(done) {
-  runSequence('clean', 'compile', 'serve:static', done);
-});
+gulp.task('preview', ['compile', 'serve']);
 
 
 //
@@ -69,12 +65,10 @@ var jadeLocals = {
 
 
 //
-// Development Server
+// Development Tasks
 //
 
-gulp.task('serve:dev', function(done) {
-  gulp.watch('source/**/*.jade', ['compile-jade']);
-
+gulp.task('develop:webpack', function(done) {
   Object.keys(webpackConfig.entry).forEach(function(key) {
     webpackConfig.entry[key] = [
       'webpack-dev-server/client?http://localhost:8080',
@@ -100,9 +94,15 @@ gulp.task('serve:dev', function(done) {
   });
 });
 
+gulp.task('develop:jade', function() {
+  gulp.start('compile:jade');
+  gulp.watch('source/**/*.jade', ['compile:jade']);
+});
+
+
 
 //
-// Compile for Production
+// Production Tasks
 //
 
 gulp.task('compile:webpack', function(done) {
@@ -154,7 +154,7 @@ gulp.task('clean', function() {
     .pipe(clean());
 });
 
-gulp.task('serve:static', function(done) {
+gulp.task('serve', function(done) {
   var server = express();
   server.use(express.static('public'));
   server.listen(8080, function(err){
