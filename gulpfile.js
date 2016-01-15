@@ -1,6 +1,7 @@
+var path = require('path');
 var webpack = require('webpack');
 var webpackDevServer = require('webpack-dev-server');
-var webpackConfig = require('./webpack.config.js');
+var express = require('express'); // from webpack-dev-server
 
 var gulp = require('gulp');
 var gulpUtil = require('gulp-util');
@@ -10,10 +11,51 @@ var filter = require('gulp-filter');
 var rename = require('gulp-rename');
 var clean = require('gulp-clean');
 
-gulp.task('default', ['clean', 'webpack-dev-server', 'compile-jade', 'watch']);
-gulp.task('build', ['clean', 'compile-webpack', 'compile-jade']);
 
-gulp.task('webpack-dev-server', function() {
+//
+// Task Table
+//
+
+gulp.task('default', ['develop']);
+gulp.task('develop', ['clean', 'start-dev-server', 'compile-jade', 'watch']);
+gulp.task('compile', ['clean', 'compile-webpack', 'compile-jade']);
+gulp.task('serve', ['compile', 'start-static-server']);
+
+
+//
+// Shared Settings
+//
+
+var webpackConfig = {
+  entry: { 'package': './assets/package.js' },
+  output: {
+    filename: '[name].webpack.js',
+    path: path.resolve('./public/assets/javascripts')
+  },
+  module: {
+    loaders: [
+      { test: /\.css$/, loader: 'style!css' },
+      { test: /\.styl$/, loader: 'style!css!stylus' }
+    ]
+  },
+  plugins: [
+    new webpack.optimize.CommonsChunkPlugin('common.webpack.js'),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery'
+    })
+  ]
+};
+
+var jadeLocals = {};
+
+
+//
+// Development Server
+//
+
+gulp.task('start-dev-server', function() {
   Object.keys(webpackConfig.entry).forEach(function(key) {
     webpackConfig.entry[key] = [
       'webpack-dev-server/client?http://localhost:8080',
@@ -30,17 +72,41 @@ gulp.task('webpack-dev-server', function() {
     hot: true,
     stats: { colors: true }
   });
-  
+
   server.listen(8080, 'localhost', function(err) {
-    if (err) throw new gulpUtil.PluginError('webpack-dev-server', err);
+    if (err) throw new gulpUtil.PluginError('start-dev-server', err);
   });
 });
 
+gulp.task('watch', function() {
+  gulp.watch('source/**/*.jade', ['compile-jade']);
+});
+
+
+//
+// Compile
+//
+
+gulp.task('compile-webpack', function(callback) {
+  webpackConfig.plugins.push(
+    new webpack.DefinePlugin({
+      'process.env': {NODE_ENV: JSON.stringify('production')}
+    }),
+    new webpack.optimize.UglifyJsPlugin(),
+    new webpack.NoErrorsPlugin()
+  );
+
+  webpack(webpackConfig)
+    .run(function(err, stats) {
+      if (err) throw new gulpUtil.PluginError('compile-webpack', err);
+      callback();
+    });
+});
+
 gulp.task('compile-jade', function() {
-  gulp
-    .src('source/**/*.jade')
+  gulp.src('source/**/*.jade')
     .pipe(jadeInheritance({basedir: 'source'}))
-    .pipe(jade({basedir: 'source', locals: {}}))
+    .pipe(jade({basedir: 'source', locals: jadeLocals}))
     .pipe(filter(function(file) {
       return !/^(layouts|partials)\//.test(file.relative);
     }))
@@ -52,19 +118,21 @@ gulp.task('compile-jade', function() {
     .pipe(gulp.dest('public'));
 });
 
-gulp.task('watch', function() {
-  gulp.watch('source/**/*.jade', ['compile-jade']);
-});
+
+//
+// Utility
+//
 
 gulp.task('clean', function() {
   gulp.src('public/**', {read: false})
     .pipe(clean());
 });
 
-gulp.task('compile-webpack', function(callback) {
-  webpack(webpackConfig)
-    .run(function (err, stats) {
-      if (err) throw new gulpUtil.PluginError('webpack', err);
-      callback();
-    });
+gulp.task('start-static-server', function() {
+  var server = express();
+  server.use(express.static('public'));
+  server.listen(8080, function(err){
+    if (err) throw new gulpUtil.PluginError('start-static-server', err);
+    gulpUtil.log('Static server listening on http://localhost:8080');
+  })
 });

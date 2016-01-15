@@ -7,5 +7,7 @@ static site that can be quickly deployed.
 **TODO**
 
 - Compile + optimize script
+-- Better uglify settings (strip comments, etc.)
+-- Pass webpack chunk hashs to jade
 - Deploy to heroku script
 - Have 'compile-jade' task auto-trigger a page reload
