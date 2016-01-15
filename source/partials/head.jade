@@ -15,6 +15,6 @@ head
   script.
     with(document.documentElement){className=className.replace(/\bno-js\b/,'js')}
 
-  script(src='/assets/javascripts/common.webpack.js')
+  script(src=assetPath('/assets/javascripts/common.webpack.js'))
   block headscripts
-    script(src='/assets/javascripts/package.webpack.js')
+    script(src=assetPath('/assets/javascripts/package.webpack.js'))
