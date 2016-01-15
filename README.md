@@ -7,7 +7,7 @@ static site that can be quickly deployed.
 **TODO**
 
 - Import assets starting point
-- Setup webpack dev server
-- Bare-bones structure
+- Bare-bones structure (layouts, partials, etc.)
 - Compile + optimize script
 - Deploy to heroku script
+- Have 'compile-jade' task auto-trigger a page reload

@@ -8,9 +8,17 @@
   "devDependencies": {
     "css-loader": "^0.23.1",
     "file-loader": "^0.8.5",
+    "gulp": "^3.9.0",
+    "gulp-clean": "^0.3.1",
+    "gulp-filter": "^3.0.1",
+    "gulp-jade": "^1.1.0",
+    "gulp-jade-inheritance": "^0.5.4",
+    "gulp-plumber": "^1.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-util": "^3.0.7",
+    "jade": "^1.11.0",
     "jeet": "^6.1.2",
     "jquery": "^2.2.0",
-    "json-loader": "^0.5.4",
     "normalize.css": "^3.0.3",
     "style-loader": "^0.13.0",
     "stylus-loader": "^1.4.3",
@@ -19,6 +27,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "scripts": {
-    "start": ""
+    "start": "jade watch source/pages/**/* --obj '{\"basedir\":\"source\"}' --hierarchy --out public"
   }
 }

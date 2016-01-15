@@ -1,0 +1,13 @@
+doctype html
+html
+  head
+    block headfonts
+    block headmeta
+
+    script(src='/assets/javascripts/common.webpack.js')
+    block headscripts
+      script(src='/assets/javascripts/package.webpack.js')
+
+  body
+    block content
+    block footscripts
