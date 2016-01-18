@@ -6,8 +6,9 @@ static site that can be quickly deployed.
 
 **TODO**
 
+- Add other jade locals / helpers
+  - currentPage
 - Figure out how images and fonts fit into this workflow
--- Investigate file-loader
-- Add other jade locals?
+  - Investigate file-loader
 - Deploy to heroku script
 - Have 'compile-jade' task auto-trigger a page reload

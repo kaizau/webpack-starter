@@ -17,6 +17,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-util": "^3.0.7",
     "jade": "^1.11.0",
+    "jade-html-loader": "thekip/jade-html-loader",
     "jeet": "^6.1.2",
     "jquery": "^2.2.0",
     "normalize.css": "^3.0.3",
@@ -28,6 +29,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "scripts": {
-    "start": "gulp"
+    "start": "rm -rf ./public/**/* & gulp compile:webpack"
   }
 }

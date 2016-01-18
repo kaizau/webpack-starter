@@ -33,27 +33,7 @@ gulp.task('preview', ['package', 'serve']);
 // Shared Settings
 //
 
-var webpackConfig = {
-  entry: { 'package': './assets/package.js' },
-  output: {
-    filename: '[name].webpack.js',
-    path: path.join(__dirname, 'public', 'assets', 'javascripts'),
-    publicPath: '/assets/javascripts/'
-  },
-  module: {
-    loaders: [
-      { test: /\.css$/, loader: 'style!css' },
-      { test: /\.styl$/, loader: 'style!css!stylus' }
-    ]
-  },
-  plugins: [
-    new webpack.ProvidePlugin({
-      $: 'jquery',
-      jQuery: 'jquery',
-      'window.jQuery': 'jquery'
-    })
-  ]
-};
+var webpackConfig = require('./webpack.config.js');
 
 var jadeLocals = {
   assetPath: function(asset) {
@@ -96,6 +76,7 @@ gulp.task('develop:webpack', function(done) {
 gulp.task('develop:jade', function() {
   gulp.start('compile:jade');
   gulp.watch('source/**/*.jade', ['compile:jade']);
+  gulp.watch('source/images/**/*.{png,jpg}', ['compile:images']);
 });
 
 
@@ -142,6 +123,10 @@ gulp.task('compile:jade', function() {
     .pipe(gulp.dest('public'));
 });
 
+gulp.task('compile:images', function() {
+  return gulp.src('source/images/**/*.{png,jpg}')
+    .pipe(gulp.dest('public/assets/images'));
+});
 
 //
 // Utility
