@@ -2,7 +2,6 @@ var path = require('path');
 var webpack = require('webpack');
 var webpackDevServer = require('webpack-dev-server');
 var express = require('express'); // from webpack-dev-server
-
 var gulp = require('gulp');
 var gulpUtil = require('gulp-util');
 var runSequence = require('run-sequence');
@@ -23,11 +22,11 @@ gulp.task('default', function(done) {
   runSequence('clean', ['develop:jade', 'develop:webpack'], done);
 });
 
-gulp.task('compile', function(done) {
+gulp.task('package', function(done) {
   runSequence('clean', 'compile:webpack', 'compile:jade', done);
 });
 
-gulp.task('preview', ['compile', 'serve']);
+gulp.task('preview', ['package', 'serve']);
 
 
 //
@@ -98,7 +97,6 @@ gulp.task('develop:jade', function() {
   gulp.start('compile:jade');
   gulp.watch('source/**/*.jade', ['compile:jade']);
 });
-
 
 
 //
