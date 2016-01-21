@@ -2,7 +2,6 @@ var path = require('path');
 var extend = require('util')._extend;
 var webpack = require('webpack');
 var webpackDevServer = require('webpack-dev-server');
-var express = require('express'); // from webpack-dev-server
 var gulp = require('gulp');
 var gulpUtil = require('gulp-util');
 var runSequence = require('run-sequence');
@@ -163,6 +162,7 @@ gulp.task('clean', function() {
 });
 
 gulp.task('serve', function(done) {
+  var express = require('express'); // from webpack-dev-server
   var server = express();
   server.use(express.static(outputDir));
   server.listen(8080, function(err){

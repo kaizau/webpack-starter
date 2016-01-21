@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "node-static": "^0.7.7"
+    "express": "^4.13.3"
   },
   "devDependencies": {
     "css-loader": "^0.23.1",
@@ -27,6 +27,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "scripts": {
-    "start": "gulp"
+    "start": "node serve.js"
   }
 }
