@@ -5,12 +5,10 @@ var webpackDevServer = require('webpack-dev-server');
 var express = require('express'); // from webpack-dev-server
 var gulp = require('gulp');
 var gulpUtil = require('gulp-util');
-var plumber = require('gulp-plumber');
 var runSequence = require('run-sequence');
 var jade = require('gulp-jade');
 var jadeInheritance = require('gulp-jade-inheritance');
 var data = require('gulp-data');
-var filter = require('gulp-filter');
 var rename = require('gulp-rename');
 var clean = require('gulp-clean');
 
