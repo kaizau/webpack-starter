@@ -13,6 +13,7 @@ var data = require('gulp-data');
 var filter = require('gulp-filter');
 var rename = require('gulp-rename');
 var clean = require('gulp-clean');
+var server; // Reference
 
 
 //
@@ -22,7 +23,7 @@ var clean = require('gulp-clean');
 //
 
 gulp.task('default', function(done) {
-  runSequence('clean', ['develop:jade', 'develop:webpack'], done);
+  runSequence('clean', 'develop:webpack', 'develop:jade', done);
 });
 
 gulp.task('package', function(done) {
@@ -89,8 +90,8 @@ gulp.task('develop:webpack', function(done) {
     new webpack.optimize.CommonsChunkPlugin('javascripts/common.webpack.js')
   );
 
-  var server = new webpackDevServer(webpack(webpackConfig), {
-    contentBase: './' + outputDir,
+  server = new webpackDevServer(webpack(webpackConfig), {
+    contentBase: outputDir,
     publicPath: '/' + assetsDir + '/',
     hot: true,
     stats: { colors: true }
@@ -104,7 +105,15 @@ gulp.task('develop:webpack', function(done) {
 
 gulp.task('develop:jade', function() {
   gulp.start('compile:jade');
-  gulp.watch(path.join(sourceDir, '**/*.jade'), ['compile:jade']);
+  gulp.watch(path.join(sourceDir, '**/*.jade'), ['develop:restart']);
+});
+
+gulp.task('develop:restart', ['compile:jade'], function(done) {
+  if (server && server.hot) {
+    console.log('>>> invalidate server!');
+    server.middleware.invalidate();
+  }
+  done();
 });
 
 
@@ -165,7 +174,7 @@ gulp.task('clean', function() {
 });
 
 gulp.task('serve', function(done) {
-  var server = express();
+  server = express();
   server.use(express.static(outputDir));
   server.listen(8080, function(err){
     if (err) throw new gulpUtil.PluginError('serve', err);
