@@ -1,12 +1,15 @@
 var path = require('path');
+var extend = require('util')._extend;
 var webpack = require('webpack');
 var webpackDevServer = require('webpack-dev-server');
 var express = require('express'); // from webpack-dev-server
 var gulp = require('gulp');
 var gulpUtil = require('gulp-util');
+var plumber = require('gulp-plumber');
 var runSequence = require('run-sequence');
 var jade = require('gulp-jade');
 var jadeInheritance = require('gulp-jade-inheritance');
+var data = require('gulp-data');
 var filter = require('gulp-filter');
 var rename = require('gulp-rename');
 var clean = require('gulp-clean');
@@ -33,15 +36,21 @@ gulp.task('preview', ['package', 'serve']);
 // Shared Settings
 //
 
+var sourceDir = 'source';
+var assetsDir = 'assets';
+var outputDir = 'public';
+
 var webpackConfig = {
-  entry: { 'package': './assets/package.js' },
+  entry: { 'javascripts/package': './assets/package.js' },
   output: {
     filename: '[name].webpack.js',
-    path: path.join(__dirname, 'public', 'assets', 'javascripts'),
-    publicPath: '/assets/javascripts/'
+    path: path.join(__dirname, outputDir, assetsDir),
+    publicPath: '/' + assetsDir + '/'
   },
   module: {
     loaders: [
+      { test: /\.(png|jpg|jpeg|gif|svg|woff|woff2)$/, loader: 'url?limit=5000&context=' + assetsDir + '&name=[path][name].[hash:12].[ext]' },
+      { test: /\.(ttf|eot)$/, loader: 'file?context=' + assetsDir + '&name=[path][name].[hash:12].[ext]' },
       { test: /\.css$/, loader: 'style!css' },
       { test: /\.styl$/, loader: 'style!css!stylus' }
     ]
@@ -56,9 +65,9 @@ var webpackConfig = {
 };
 
 var jadeLocals = {
-  assetPath: function(asset) {
-    if (!jadeLocals.assetHash) return asset;
-    return asset.replace('.webpack.', '.' + jadeLocals.assetHash + '.');
+  asset: function(file) {
+    if (!jadeLocals.assetHash) return file;
+    return file.replace('.webpack.', '.' + jadeLocals.assetHash + '.');
   }
 };
 
@@ -77,25 +86,25 @@ gulp.task('develop:webpack', function(done) {
   });
   webpackConfig.plugins.push(
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.optimize.CommonsChunkPlugin('common.webpack.js')
+    new webpack.optimize.CommonsChunkPlugin('javascripts/common.webpack.js')
   );
 
   var server = new webpackDevServer(webpack(webpackConfig), {
-    contentBase: 'public',
-    publicPath: '/assets/javascripts/',
+    contentBase: './' + outputDir,
+    publicPath: '/' + assetsDir + '/',
     hot: true,
     stats: { colors: true }
   });
 
   server.listen(8080, 'localhost', function(err) {
-    if (err) throw new gulpUtil.PluginError('start-dev-server', err);
+    if (err) throw new gulpUtil.PluginError('develop:webpack', err);
     done();
   });
 });
 
 gulp.task('develop:jade', function() {
   gulp.start('compile:jade');
-  gulp.watch('source/**/*.jade', ['compile:jade']);
+  gulp.watch(path.join(sourceDir, '**/*.jade'), ['compile:jade']);
 });
 
 
@@ -103,43 +112,46 @@ gulp.task('develop:jade', function() {
 // Production Tasks
 //
 
+var RewriteJadeAssetsPlugin = function() {
+  return function() {
+    this.plugin('done', function(stats) {
+      jadeLocals.assetHash = stats.hash;
+    });
+  };
+};
+
 gulp.task('compile:webpack', function(done) {
   webpackConfig.output.filename = '[name].[hash].js';
   webpackConfig.plugins.push(
+    new RewriteJadeAssetsPlugin(),
     new webpack.DefinePlugin({
       'process.env': {NODE_ENV: JSON.stringify('production')}
     }),
-    new webpack.optimize.CommonsChunkPlugin('common.[hash].js'),
-    function() {
-      // Required to rewrite asset paths in Jade
-      this.plugin('done', function(stats) {
-        jadeLocals.assetHash = stats.hash;
-      });
-    },
+    new webpack.optimize.CommonsChunkPlugin('javascripts/common.[hash].js'),
     new webpack.optimize.UglifyJsPlugin(),
     new webpack.NoErrorsPlugin()
   );
 
-  webpack(webpackConfig)
-    .run(function(err, stats) {
-      if (err) throw new gulpUtil.PluginError('compile-webpack', err);
-      done();
-    });
+  webpack(webpackConfig).run(function(err, stats) {
+    if (err) throw new gulpUtil.PluginError('compile:webpack', err);
+    done();
+  });
 });
 
 gulp.task('compile:jade', function() {
-  return gulp.src('source/**/*.jade')
-    .pipe(jadeInheritance({basedir: 'source'}))
-    .pipe(jade({basedir: 'source', locals: jadeLocals}))
-    .pipe(filter(function(file) {
-      return !/^(layouts|partials)\//.test(file.relative);
+  return gulp.src(path.join(sourceDir, 'pages/**/*.jade'))
+    .pipe(jadeInheritance({basedir: sourceDir}))
+    .pipe(data(function(file){
+      var name = file.relative.slice(5).slice(0, -5); // -pages -.jade
+      return extend({
+        current: name
+      }, jadeLocals);
     }))
-    .pipe(rename(function(path){
-      if (path.dirname.substring(0, 5) === 'pages') {
-        path.dirname = path.dirname.slice(5);
-      }
+    .pipe(jade({basedir: sourceDir}))
+    .pipe(rename(function(file){
+      file.dirname = file.dirname.slice(5); // -pages
     }))
-    .pipe(gulp.dest('public'));
+    .pipe(gulp.dest(outputDir));
 });
 
 
@@ -148,15 +160,15 @@ gulp.task('compile:jade', function() {
 //
 
 gulp.task('clean', function() {
-  return gulp.src('public/**', {read: false})
+  return gulp.src(path.join(outputDir, '**'), {read: false})
     .pipe(clean());
 });
 
 gulp.task('serve', function(done) {
   var server = express();
-  server.use(express.static('public'));
+  server.use(express.static(outputDir));
   server.listen(8080, function(err){
-    if (err) throw new gulpUtil.PluginError('start-static-server', err);
+    if (err) throw new gulpUtil.PluginError('serve', err);
     gulpUtil.log('Static server listening on http://localhost:8080');
     done();
   })
