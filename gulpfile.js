@@ -62,10 +62,21 @@ var webpackConfig = {
 };
 
 var jadeLocals = {
+  // Helper to rewrite asset hashes
   asset: function(file) {
     if (!jadeLocals.assetHash) return file;
     return file.replace('.webpack.', '.' + jadeLocals.assetHash + '.');
+  },
+
+  // Helper to generate unique classes for <body>
+  bodyClass: function(current) {
+    return 'Body' + current.replace(/(^|\W)\w/g, function(match) {
+      return match.slice(1).toUpperCase();
+    });
   }
+
+  // jadeLocals.current
+  // Current file name; set during compile:jade
 };
 
 
@@ -147,6 +158,10 @@ gulp.task('compile:jade', function() {
     .pipe(jade({basedir: sourceDir}))
     .pipe(rename(function(file){
       file.dirname = file.dirname.slice(5); // -pages
+      if (file.basename != 'index' && file.basename != '404') {
+        file.dirname = path.join(file.dirname, file.basename);
+        file.basename = 'index';
+      }
     }))
     .pipe(gulp.dest(outputDir));
 });
