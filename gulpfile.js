@@ -23,7 +23,7 @@ gulp.task('default', function(done) {
 });
 
 gulp.task('package', function(done) {
-  runSequence('clean', 'compile:webpack', 'compile:jade', done);
+  runSequence('clean', 'compile:webpack', ['compile:jade', 'compile:static'], done);
 });
 
 gulp.task('preview', ['package', 'serve']);
@@ -63,6 +63,9 @@ var webpackConfig = {
 
 var jadeLocals = {
   // Helper to rewrite asset hashes
+  //
+  // When compiling for production, jadeLocals.assetHash is set after
+  // `compile:webpack`. Thus webpack compilation should precede jade.
   asset: function(file) {
     if (!jadeLocals.assetHash) return file;
     return file.replace('.webpack.', '.' + jadeLocals.assetHash + '.');
@@ -112,7 +115,9 @@ gulp.task('develop:webpack', function(done) {
 
 gulp.task('develop:jade', function() {
   gulp.start('compile:jade');
+  gulp.start('compile:static');
   gulp.watch(path.join(sourceDir, '**/*.jade'), ['compile:jade']);
+  gulp.watch(path.join(assetsDir, '{images,fonts}/**'), ['compile:static']);
 });
 
 
@@ -152,16 +157,24 @@ gulp.task('compile:jade', function() {
     .pipe(data(function(file){
       var name = file.relative.slice(5).slice(0, -5); // -pages -.jade
       return extend({
-        current: name
+        current: name // Sets `current` var for each file
       }, jadeLocals);
     }))
     .pipe(jade({basedir: sourceDir}))
-    .pipe(rename(function(file){
+    .pipe(rename(function(file) {
       file.dirname = file.dirname.slice(5); // -pages
       if (file.basename != 'index' && file.basename != '404') {
         file.dirname = path.join(file.dirname, file.basename);
         file.basename = 'index';
       }
+    }))
+    .pipe(gulp.dest(outputDir));
+});
+
+gulp.task('compile:static', function() {
+  return gulp.src(path.join(assetsDir, '{images,fonts}/**/**.*'))
+    .pipe(rename(function(file) {
+      file.dirname = path.join(assetsDir, file.dirname);
     }))
     .pipe(gulp.dest(outputDir));
 });
@@ -172,7 +185,7 @@ gulp.task('compile:jade', function() {
 //
 
 gulp.task('clean', function() {
-  return gulp.src(path.join(outputDir, '**'), {read: false})
+  return gulp.src(path.join(outputDir, '*'), {read: false})
     .pipe(clean());
 });
 
